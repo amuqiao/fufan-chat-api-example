@@ -2,7 +2,7 @@ import os
 
 # 更新以下字段为你本地数据库的实际用户名、密码和数据库名
 username = 'root'
-hostname = '192.168.110.131'
+hostname = '127.0.0.1'
 database_name = 'fufanapi'
 password = "snowball950123"
 
