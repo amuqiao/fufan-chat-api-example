@@ -8,13 +8,14 @@ import numpy as np
 from sqlalchemy.ext.asyncio import AsyncSession
 from server.db.session import with_async_session
 from sqlalchemy.future import select
-from server.db.repository.user_repository import (
-    register_user, UserRegistrationRequest
-)
+from server.db.repository.user_repository import register_user, UserRegistrationRequest
 from server.knowledge_base.kb_service.faiss_kb_service import FaissKBService
 from server.knowledge_base.utils import (
-    get_kb_path, get_doc_path, KnowledgeFile,
-    list_kbs_from_folder, list_files_from_folder,
+    get_kb_path,
+    get_doc_path,
+    KnowledgeFile,
+    list_kbs_from_folder,
+    list_files_from_folder,
 )
 from langchain.docstore.document import Document
 import asyncio
@@ -27,7 +28,10 @@ import uuid
 
 
 @with_async_session
-async def get_user_by_username(session, username: str, ):
+async def get_user_by_username(
+    session,
+    username: str,
+):
     """
     根据用户名获取用户
     """
@@ -47,19 +51,17 @@ async def register_user(session, username: str, password: str):
     new_user = UserModel(
         id=str(uuid.uuid4()),
         username=username,
-        password_hash=hashed_password.decode()  # 确保存储的是字符串
+        password_hash=hashed_password.decode(),  # 确保存储的是字符串
     )
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
-    return {
-        "id": new_user.id,
-        "username": new_user.username
-    }
+    return {"id": new_user.id, "username": new_user.username}
 
 
 async def process_and_add_document(file_path, faiss_service, user_id):
     from server.knowledge_base.kb_service.base import KBServiceFactory
+
     kb = await KBServiceFactory.get_service_by_name("private")
 
     # 如果想要使用的向量数据库的collecting name 不存在，则进行创建
@@ -67,14 +69,16 @@ async def process_and_add_document(file_path, faiss_service, user_id):
         from server.db.repository.knowledge_base_repository import add_kb_to_db
 
         # 先在Mysql中创建向量数据库的基本信息
-        await add_kb_to_db(kb_name="private",
-                           kb_info="个人/公司私有知识库数据",
-                           vs_type="faiss",
-                           embed_model="bge-large-zh-v1.5",
-                           user_id=user_id)
+        await add_kb_to_db(
+            kb_name="private",
+            kb_info="个人/公司私有知识库数据",
+            vs_type="faiss",
+            embed_model="bge-large-zh-v1.5",
+            user_id=user_id,
+        )
 
     processor = UnstructuredLightPipeline()
-    docs = await processor.run_pipeline(file_path, ['unstructured'])
+    docs = await processor.run_pipeline(file_path, ["unstructured"])
 
     # 创建 KnowledgeFile 对象
     kb_file = KnowledgeFile(Path(file_path).name, "private")
@@ -86,8 +90,13 @@ async def process_and_add_document(file_path, faiss_service, user_id):
 
 async def private_main(user_id):
     # 文件夹路径，包含所有PDF文件
-    folder_path = '/home/00_rag/fufan-chat-api/knowledge_base/private/content'
-    pdf_files = [f for f in os.listdir(folder_path) if f.endswith('.pdf')]
+    folder_path = (
+        "e:/github_project/fufan-chat-api-6.0.0/knowledge_base/private/content"
+    )
+    # 确保文件夹存在
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    pdf_files = [f for f in os.listdir(folder_path) if f.endswith(".pdf")]
 
     # 实例化 FaissKBService
     faiss_service = FaissKBService("private")
@@ -100,19 +109,25 @@ async def private_main(user_id):
 
 async def wiki_main(user_id):
     from langchain.schema import Document
-    file_path = "/home/00_rag/fufan-chat-api/knowledge_base/wiki/content/education.jsonl"
+
+    file_path = "e:/github_project/fufan-chat-api-6.0.0/knowledge_base/wiki/content/education.jsonl"
+    # 确保文件夹存在
+    folder_path = os.path.dirname(file_path)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     # 创建一个空的 Document 列表
     docs = []
     # 打开文件并读取每一行
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             for line in file:
                 try:
                     # 解析 JSON 数据
                     data = json.loads(line)
                     # 创建一个 Document 对象
-                    document = Document(page_content=data['contents'],
-                                        metadata={'source': file_path})
+                    document = Document(
+                        page_content=data["contents"], metadata={"source": file_path}
+                    )
                     # 将 Document 对象添加到列表中
                     docs.append(document)
                 except json.JSONDecodeError as e:
@@ -128,6 +143,7 @@ async def wiki_main(user_id):
     faiss_service = FaissKBService("wiki")
 
     from server.knowledge_base.kb_service.base import KBServiceFactory
+
     kb = await KBServiceFactory.get_service_by_name("wiki")
 
     # 如果想要使用的向量数据库的collecting name 不存在，则进行创建
@@ -135,11 +151,13 @@ async def wiki_main(user_id):
         from server.db.repository.knowledge_base_repository import add_kb_to_db
 
         # 先在Mysql中创建向量数据库的基本信息
-        await add_kb_to_db(kb_name="wiki",
-                           kb_info="wiki公共数据信息",
-                           vs_type="faiss",
-                           embed_model="bge-large-zh-v1.5",
-                           user_id=user_id)
+        await add_kb_to_db(
+            kb_name="wiki",
+            kb_info="wiki公共数据信息",
+            vs_type="faiss",
+            embed_model="bge-large-zh-v1.5",
+            user_id=user_id,
+        )
 
     # print(faiss_service)
     # 创建 KnowledgeFile 对象，注意这里只传递文件名和知识库名称
@@ -171,7 +189,7 @@ async def test_query():
     print(search_ans)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(sequential_execution())
     # 测试
     asyncio.run(test_query())

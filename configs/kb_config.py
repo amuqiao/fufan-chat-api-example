@@ -1,12 +1,14 @@
 import os
 
 # 更新以下字段为你本地数据库的实际用户名、密码和数据库名
-username = 'root'
-hostname = '127.0.0.1'
-database_name = 'fufanapi'
+username = "root"
+hostname = "127.0.0.1"
+database_name = "fufanapi"
 password = "snowball950123"
 
-SQLALCHEMY_DATABASE_URI = f"mysql+asyncmy://{username}:{password}@{hostname}/{database_name}?charset=utf8mb4"
+SQLALCHEMY_DATABASE_URI = (
+    f"mysql+asyncmy://{username}:{password}@{hostname}/{database_name}?charset=utf8mb4"
+)
 
 # 默认使用的知识库
 DEFAULT_KNOWLEDGE_BASE = ""
@@ -43,14 +45,15 @@ SCORE_THRESHOLD = 1.0
 ZH_TITLE_ENHANCE = False
 
 # 知识库默认存储路径
-KB_ROOT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base")
+KB_ROOT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "knowledge_base"
+)
 if not os.path.exists(KB_ROOT_PATH):
     os.mkdir(KB_ROOT_PATH)
 
 # 可选向量库类型及对应配置
 kbs_config = {
-    "faiss": {
-    },
+    "faiss": {},
     "milvus": {
         "host": "192.168.110.131",
         "port": "19530",
@@ -68,19 +71,21 @@ kbs_config = {
     "pg": {
         "connection_uri": "postgresql://postgres:postgres@127.0.0.1:5432/langchain_chatchat",
     },
-
     "es": {
         "host": "127.0.0.1",
         "port": "9200",
         "index_name": "test_index",
         "user": "",
-        "password": ""
+        "password": "",
     },
     "milvus_kwargs": {
         "search_params": {"metric_type": "L2"},  # 在此处增加search_params
-        "index_params": {"metric_type": "L2", "index_type": "HNSW"}  # 在此处增加index_params
+        "index_params": {
+            "metric_type": "L2",
+            "index_type": "HNSW",
+        },  # 在此处增加index_params
     },
-    "chromadb": {}
+    "chromadb": {},
 }
 
 # TextSplitter配置项，如果你不明白其中的含义，就不要修改。
@@ -98,13 +103,12 @@ text_splitter_dict = {
         "tokenizer_name_or_path": "cl100k_base",
     },
     "MarkdownHeaderTextSplitter": {
-        "headers_to_split_on":
-            [
-                ("#", "head1"),
-                ("##", "head2"),
-                ("###", "head3"),
-                ("####", "head4"),
-            ]
+        "headers_to_split_on": [
+            ("#", "head1"),
+            ("##", "head2"),
+            ("###", "head3"),
+            ("####", "head4"),
+        ]
     },
 }
 

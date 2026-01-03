@@ -26,15 +26,18 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 class UnstructuredLightPipeline(Pipeline):
 
-    async def run_pipeline(self,
-                           file_path: str,
-                           options: List[str] = None,
-                           debug: bool = False,
-                           local: bool = True) -> Any:
+    async def run_pipeline(
+        self,
+        file_path: str,
+        options: List[str] = None,
+        debug: bool = False,
+        local: bool = True,
+    ) -> Any:
         print(f"\nRunning pipeline with unstructured_langchain \n")
 
-        strategy = 'hi_res'
-        model_name = 'yolox'
+        # 使用 fast 策略，避免使用需要在线下载的模型
+        strategy = "fast"
+        model_name = "yolox"  # 确保这个模型是本地可用的
 
         extract_tables = False
         # Initialize options as an empty list if it is None
@@ -46,32 +49,34 @@ class UnstructuredLightPipeline(Pipeline):
         elements = self.invoke_pipeline_step(
             lambda: self.process_file(file_path, strategy, model_name),
             "Extracting elements from the document...",
-            local
+            local,
         )
 
         if debug:
-            new_extension = 'json'  # You can change this to any extension you want
+            new_extension = "json"  # You can change this to any extension you want
             new_file_path = self.change_file_extension(file_path, new_extension)
 
             documents = self.invoke_pipeline_step(
                 lambda: self.load_text_data(elements, new_file_path, extract_tables),
                 "Loading text data...",
-                local
+                local,
             )
         else:
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_file_path = os.path.join(temp_dir, "file_data.json")
 
                 documents = self.invoke_pipeline_step(
-                    lambda: self.load_text_data(elements, temp_file_path, extract_tables),
+                    lambda: self.load_text_data(
+                        elements, temp_file_path, extract_tables
+                    ),
                     "Loading text data...",
-                    local
+                    local,
                 )
 
         docs = self.invoke_pipeline_step(
             lambda: self.split_text(documents, chunk_size=200, overlap=50),
             "Splitting text...",
-            local
+            local,
         )
 
         return docs
@@ -79,26 +84,26 @@ class UnstructuredLightPipeline(Pipeline):
     def process_file(self, file_path, strategy, model_name):
         elements = None
 
-        if file_path.lower().endswith('.pdf'):
+        if file_path.lower().endswith(".pdf"):
             elements = partition_pdf(
                 filename=file_path,
                 strategy=strategy,
                 infer_table_structure=True,
-                model_name=model_name
+                model_name=model_name,
             )
-        elif file_path.lower().endswith(('.jpg', '.jpeg', '.png')):
+        elif file_path.lower().endswith((".jpg", ".jpeg", ".png")):
             elements = partition_image(
                 filename=file_path,
                 strategy=strategy,
                 infer_table_structure=True,
-                model_name=model_name
+                model_name=model_name,
             )
 
         return elements
 
     def load_text_data(self, elements, file_path, extract_tables):
         # 手动将元素保存到 JSON 文件中，确保使用 ensure_ascii=False
-        with open(file_path, 'w', encoding='utf-8') as file:
+        with open(file_path, "w", encoding="utf-8") as file:
             json.dump([e.to_dict() for e in elements], file, ensure_ascii=False)
 
         # elements_to_json(elements, filename=file_path)
@@ -110,14 +115,16 @@ class UnstructuredLightPipeline(Pipeline):
         return documents
 
     def split_text(self, text, chunk_size, overlap):
-        text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+        text_splitter = CharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=overlap
+        )
         docs = text_splitter.split_documents(text)
 
         return docs
 
     def process_json_file(self, input_data, extract_tables):
         # Read the JSON file
-        with open(input_data, 'r', encoding="utf-8") as file:
+        with open(input_data, "r", encoding="utf-8") as file:
             data = json.load(file)
 
         # Iterate over the JSON data and extract required table elements
@@ -133,22 +140,24 @@ class UnstructuredLightPipeline(Pipeline):
                 extracted_elements.append(entry["text"])
 
         # Write the extracted elements to the output file
-        new_extension = 'txt'  # You can change this to any extension you want
+        new_extension = "txt"  # You can change this to any extension you want
         new_file_path = self.change_file_extension(input_data, new_extension)
-        with open(new_file_path, 'w') as output_file:
+        with open(new_file_path, "w") as output_file:
             for element in extracted_elements:
-                output_file.write(element + "\n\n")  # Adding two newlines for separation
+                output_file.write(
+                    element + "\n\n"
+                )  # Adding two newlines for separation
 
         return new_file_path
 
     def change_file_extension(self, file_path, new_extension):
         # Check if the new extension starts with a dot and add one if not
-        if not new_extension.startswith('.'):
-            new_extension = '.' + new_extension
+        if not new_extension.startswith("."):
+            new_extension = "." + new_extension
 
         # Split the file path into two parts: the base (everything before the last dot) and the extension
         # If there's no dot in the filename, it'll just return the original filename without an extension
-        base = file_path.rsplit('.', 1)[0]
+        base = file_path.rsplit(".", 1)[0]
 
         # Concatenate the base with the new extension
         new_file_path = base + new_extension
@@ -170,9 +179,9 @@ class UnstructuredLightPipeline(Pipeline):
     def invoke_pipeline_step(self, task_call, task_description, local):
         if local:
             with Progress(
-                    SpinnerColumn(),
-                    TextColumn("[progress.description]{task.description}"),
-                    transient=False,
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=False,
             ) as progress:
                 progress.add_task(description=task_description, total=None)
                 ret = task_call()
@@ -181,5 +190,3 @@ class UnstructuredLightPipeline(Pipeline):
             ret = task_call()
 
         return ret
-
-

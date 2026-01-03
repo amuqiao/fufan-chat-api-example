@@ -9,7 +9,7 @@ STREAM = True
 
 # 默认启动的模型，如果使用的是glm3-6b，请替换模型名称
 # LLM_MODELS = ["glm4-9b-chat", "zhipu-api"]
-LLM_MODELS = ["chatglm3-6b", "zhipu-api"]
+LLM_MODELS = ["chatglm3-6b"]
 
 RERANKER_MODEL = "bge-reranker-large"
 RERANKER_MAX_LENGTH = 1024
@@ -30,37 +30,28 @@ MODEL_PATH = {
     # 这里定义 本机服务器上存储的大模型权重存储路径
     "local_model": {
         # 默认使用glm4-9b-chat
-        "glm4-9b-chat": "/home/00_rag/model/ZhipuAI/chatglm4-9b-chat",
-
-        "chatglm3-6b": "/home/00_rag/model/ZhipuAI/chatglm3-6b/",
-
+        "glm4-9b-chat": r"E:\github_project\models\chatglm4-9b-chat",
+        "chatglm3-6b": r"E:\github_project\models\chatglm3-6b",
         # 可扩展其他的开源大模型
-
     },
-
     # 这里定义 本机服务器上存储的Embedding模型权重存储路径
     "embed_model": {
-        "bge-large-zh-v1.5": "/home/00_rag/model/AI-ModelScope/bge-large-zh-v1___5",
-
-        "m3e-base": "/home/00_rag/model/m3e-base",
+        "bge-large-zh-v1.5": r"E:\github_project\models\bge-large-zh-v1.5",
+        "m3e-base": r"E:\github_project\models\m3e-base",
         # 可扩展其他的Embedding模型
     },
-
     "reranker": {
-        "bge-reranker-large": "/home/00_rag/model/Xorbits/bge-reranker-large",
-
-    }
+        "bge-reranker-large": r"E:\github_project\models\bge-reranker-large",
+    },
 }
 
 ONLINE_LLM_MODEL = {
-
     # 智谱清言的在线API服务
     "zhipu-api": {
         "api_key": "8e1482448c5924ea98bc483b4846009d.bViRUeDbZShksjPO",
         "version": "glm-4",
         "provider": "ChatGLMWorker",
     },
-
     # OpenAI GPT模型的在线服务
     "openai-api": {
         "model_name": "gpt-4",
@@ -68,9 +59,7 @@ ONLINE_LLM_MODEL = {
         "api_key": "",
         "openai_proxy": "",
     },
-
     # 可扩展其他的模型在线模型
-
 }
 
 SUPPORT_AGENT_MODEL = [
@@ -87,7 +76,7 @@ SUPPORT_AGENT_MODEL = [
 EMBEDDING_MODEL = "bge-large-zh-v1.5"
 
 # Embedding 模型运行设备。设为 "auto" 会自动检测(会有警告)，也可手动设定为 "cuda","mps","cpu","xpu" 其中之一。
-EMBEDDING_DEVICE = "auto"
+EMBEDDING_DEVICE = "cuda"
 
 # 搜索引擎匹配结题数量
 SEARCH_ENGINE_TOP_K = 3
@@ -99,4 +88,6 @@ SEARCH_RERANK_TOP_K = 3
 HISTORY_LEN = 5
 
 URL = "https://google.serper.dev/search"
-SERPER_API_KEY = "c4a95d2be3eb2337a373a308c8403f3dc82a1aee"  # 这里替换为自己实际的Serper API Key
+SERPER_API_KEY = (
+    "c4a95d2be3eb2337a373a308c8403f3dc82a1aee"  # 这里替换为自己实际的Serper API Key
+)
