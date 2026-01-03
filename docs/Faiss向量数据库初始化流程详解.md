@@ -1,5 +1,7 @@
 # Faiss向量数据库初始化流程详解
 
+| fufan-chat-api-6.0.0\server\knowledge_base\init_faiss_sync.py | 初始化Faiss向量数据库脚本 
+
 ## 1. 项目背景与目的
 
 在RAG（检索增强生成）系统中，向量数据库是核心组件之一，用于存储和检索文档向量。本项目中，我们需要初始化Faiss向量数据库，将PDF和JSONL文档转换为向量并存储。
