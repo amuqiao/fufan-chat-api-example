@@ -3,7 +3,7 @@ name = "fufan-chat-api-6-0-0"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "pypdf2>=3.0.1",
 ]
