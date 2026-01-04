@@ -98,6 +98,56 @@ flowchart TD
 | 用户管理模块 | 管理用户信息和权限 | `server/db/repository/user_repository.py` |
 | 会话管理模块 | 管理会话和消息 | `server/db/repository/conversation_repository.py` |
 
+### 2.3 聊天模块对比分析
+
+#### 2.3.1 聊天模块共同点
+
+所有聊天模块共享以下核心设计和实现特点：
+
+| 共同点 | 描述 |
+|--------|------|
+| **异步架构** | 所有模块均采用异步设计，使用FastAPI的异步处理能力和SSE (Server-Sent Events) 实现流式响应 |
+| **大模型调用** | 均使用`get_ChatOpenAI`函数获取大模型实例，通过`LLMChain`进行推理调用 |
+| **消息管理** | 均使用`add_message_to_db`函数将用户查询保存到数据库，支持会话历史管理 |
+| **回调机制** | 均使用回调处理器处理流式输出，支持实时响应 |
+| **会话管理** | 支持通过`conversation_id`管理会话历史，使用会话内存保存历史对话 |
+| **提示词模板** | 均使用`get_prompt_template`函数获取不同场景的提示词模板 |
+| **配置驱动** | 均从配置文件中读取模型名称、温度、最大令牌数等配置 |
+| **流式输出** | 支持通过STREAM配置控制是否使用流式输出 |
+
+#### 2.3.2 聊天模块区别
+
+| 特性 | 通用聊天模块<br>(chat) | 知识库聊天模块<br>(knowledge_base_chat) | 搜索引擎聊天模块<br>(search_engine_chat) | 推荐聊天模块<br>(recommend_base_chat) | Agent聊天模块<br>(agent_chat) |
+|------|-------------------------|------------------------------------------|-------------------------------------------|------------------------------------------|----------------------------------|
+| **功能定位** | 直接调用大模型生成回答 | 结合知识库内容生成回答 | 结合实时搜索结果生成回答 | 基于用户画像生成推荐内容 | 使用智能代理调用工具生成回答 |
+| **数据源** | 大模型自身知识 | 指定知识库中的文档 | 实时搜索结果 | 用户画像和推荐知识库 | 工具调用结果 |
+| **处理流程** | 查询 → 大模型生成 → 响应 | 查询 → 知识库检索 → 文档重排序 → 大模型生成 → 响应 | 查询 → 搜索 → 结果重排序 → 内容提取 → 向量检索 → 大模型生成 → 响应 | 查询 → 历史分析 → 用户画像生成 → 推荐检索 → 大模型生成 → 响应 | 查询 → 代理决策 → 工具调用 → 结果处理 → 大模型生成 → 响应 |
+| **核心组件** | 大模型 | 知识库、向量数据库、重排序模型 | 搜索引擎、向量数据库、重排序模型 | 用户画像生成、推荐知识库 | Agent执行器、工具集 |
+| **内存管理** | ConversationBufferDBMemory | ConversationBufferDBMemory | ConversationBufferDBMemory | ConversationBufferDBMemory | ConversationBufferWindowMemory |
+| **工具使用** | 无 | 无 | 无 | 无 | 支持多工具调用 |
+| **输出格式** | 纯文本回答 | 回答+引用文档 | 回答+搜索结果+向量检索文档 | 回答+推荐内容 | 回答+工具调用记录+最终答案 |
+| **特殊处理** | 无 | 文档重排序、相关性过滤 | 搜索结果重排序、内容提取 | 用户画像生成、推荐内容匹配 | 代理决策、工具调用管理 |
+
+#### 2.3.3 聊天模块适用场景
+
+| 模块 | 适用场景 | 典型使用案例 |
+|------|----------|--------------|
+| 通用聊天模块 | 不需要外部知识的日常对话 | 闲聊、常识问答、简单咨询 |
+| 知识库聊天模块 | 需要基于特定知识库内容的问答 | 企业内部知识查询、产品文档问答、专业领域问答 |
+| 搜索引擎聊天模块 | 需要最新、实时信息的问答 | 时事新闻查询、当前事件分析、最新产品信息 |
+| 推荐聊天模块 | 需要个性化推荐的场景 | 学习资源推荐、内容推荐、产品推荐 |
+| Agent聊天模块 | 需要复杂推理和工具调用的场景 | 数据分析、代码生成、多步骤问题解决、信息收集 |
+
+#### 2.3.4 聊天模块扩展能力
+
+| 模块 | 扩展方向 | 实现方式 |
+|------|----------|----------|
+| 通用聊天模块 | 支持更多模型、优化提示词 | 添加模型配置、优化提示词模板 |
+| 知识库聊天模块 | 支持更多向量数据库、优化检索算法 | 集成更多向量数据库、优化检索和重排序算法 |
+| 搜索引擎聊天模块 | 支持更多搜索引擎、优化搜索结果处理 | 集成更多搜索引擎API、优化结果提取和处理 |
+| 推荐聊天模块 | 优化用户画像生成、支持更多推荐算法 | 改进用户画像生成算法、集成更多推荐模型 |
+| Agent聊天模块 | 添加更多工具、优化代理决策 | 扩展工具集、改进代理决策逻辑 |
+
 ## 3. 核心流程
 
 ### 3.1 通用聊天流程
@@ -345,6 +395,70 @@ FastChat 是一个用于部署和服务大模型的开源框架，主要包含�
 1. **Controller**：核心组件，负责管理和调度 Model Worker
 2. **Model Worker**：负责加载和运行大模型
 3. **OpenAI API**：提供 OpenAI 兼容的 API 接口
+
+#### FastChat 详细架构图
+
+```mermaid
+flowchart TD
+    subgraph "FastChat 架构"
+    A["API Server"]:::api -->|请求大模型调用| B["Controller"]:::controller
+    
+    B -->|注册模型| C["Model Worker 1"]:::worker
+    B -->|注册模型| D["Model Worker 2"]:::worker
+    B -->|注册模型| E["Model Worker N"]:::worker
+    
+    B -->|调度请求| C
+    B -->|调度请求| D
+    B -->|调度请求| E
+    
+    C -->|加载模型| F["本地大模型 1\n(如 ChatGLM3-6B)"]:::model
+    D -->|加载模型| G["本地大模型 2\n(如 GLM4-9B-Chat)"]:::model
+    E -->|调用 API| H["在线大模型\n(如 智谱 AI)"]:::model
+    
+    B -->|OpenAI 兼容 API| I["OpenAI API Server"]:::openai_api
+    I -->|请求转发| B
+    
+    J["外部 OpenAI 客户端"]:::external -->|OpenAI 协议| I
+    end
+    
+    classDef api fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef controller fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef worker fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef model fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef openai_api fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef external fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+```
+
+**组件说明**：
+
+1. **Controller**：
+   - 核心调度中心，管理所有 Model Worker
+   - 接收 API Server 的模型调用请求
+   - 根据调度算法（如最短队列）分配请求给合适的 Model Worker
+   - 维护 Model Worker 的注册信息和状态
+   - 支持动态添加和移除 Model Worker
+
+2. **Model Worker**：
+   - 负责加载和运行大模型
+   - 向 Controller 注册可用模型
+   - 接收 Controller 转发的推理请求
+   - 执行模型推理并返回结果
+   - 支持多种模型类型（本地模型、在线模型）
+
+3. **OpenAI API Server**：
+   - 提供与 OpenAI 兼容的 API 接口
+   - 将外部 OpenAI 客户端请求转发给 Controller
+   - 支持 OpenAI API 协议的各种参数和功能
+   - 实现与 FastChat 内部协议的转换
+
+**调度流程**：
+
+1. 各 Model Worker 启动后向 Controller 注册可用模型
+2. Controller 维护一个模型-Worker 映射表
+3. API Server 或外部 OpenAI 客户端发送模型调用请求
+4. Controller 根据调度算法选择合适的 Model Worker
+5. Model Worker 执行模型推理
+6. 推理结果通过 Controller 返回给请求方
 
 ### 7.2 模型调用流程
 
