@@ -574,7 +574,278 @@ flowchart TD
    - 输出内容审核
    - 防止注入攻击
 
-## 11. 总结
+## 11. 核心模块架构分析
+
+### 11.1 流式输出架构
+
+#### 11.1.1 架构概述
+
+流式输出是本系统的核心特性之一，通过 Server-Sent Events (SSE) 实现实时响应，提升用户体验。系统采用异步架构，结合 LangChain 的回调机制，实现了高效的流式输出。
+
+#### 11.1.2 架构图
+
+```mermaid
+flowchart TD
+    A["客户端"]:::client -->|HTTP请求| B["FastAPI路由"]:::api
+    B -->|调用聊天模块| C["聊天模块"]:::chat
+    C -->|创建回调处理器| D["AsyncIteratorCallbackHandler"]:::callback
+    C -->|获取大模型实例| E["ChatOpenAI实例"]:::model
+    C -->|创建LLMChain| F["LLMChain"]:::chain
+    F -->|异步调用大模型| G["FastChat服务"]:::fastchat
+    G -->|流式返回结果| F
+    F -->|触发回调| D
+    D -->|生成流式输出| H["SSE事件流"]:::sse
+    H -->|实时返回| A
+    
+    classDef client fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef api fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef callback fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef model fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef chain fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef fastchat fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef sse fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+```
+
+#### 11.1.2 实现流程
+
+1. **客户端请求**：客户端发送HTTP请求到FastAPI路由
+2. **创建回调处理器**：聊天模块创建AsyncIteratorCallbackHandler实例，用于处理流式输出
+3. **获取大模型实例**：通过get_ChatOpenAI函数获取大模型实例
+4. **创建LLMChain**：创建LLMChain实例，配置回调处理器
+5. **异步调用大模型**：LLMChain异步调用FastChat服务
+6. **流式返回结果**：FastChat服务流式返回结果给LLMChain
+7. **触发回调**：LLMChain触发回调处理器的事件
+8. **生成流式输出**：回调处理器生成SSE事件流
+9. **实时返回**：SSE事件流实时返回给客户端
+
+#### 11.1.3 核心组件
+
+| 组件 | 作用 | 文件位置 |
+|------|------|----------|
+| AsyncIteratorCallbackHandler | 处理流式输出的回调处理器 | 来自LangChain库 |
+| wrap_done | 包装异步任务，处理异常和完成事件 | `server/utils.py:222` |
+| SSE EventSourceResponse | 实现SSE响应 | 来自sse_starlette库 |
+| get_ChatOpenAI | 获取大模型实例，配置流式输出 | `server/utils.py:75` |
+
+### 11.2 提示词工程架构
+
+#### 11.2.1 架构概述
+
+提示词工程是本系统的重要组成部分，通过统一的提示词模板管理，实现了不同聊天场景的灵活切换。系统采用了模板化设计，支持多种聊天场景的提示词配置。
+
+#### 11.2.2 架构图
+
+```mermaid
+flowchart TD
+    A["聊天模块"]:::chat -->|获取提示词模板| B["get_prompt_template函数"]:::utils
+    B -->|加载配置| C["PROMPT_TEMPLATES字典"]:::config
+    C -->|返回模板| B
+    B -->|返回给聊天模块| A
+    A -->|填充模板变量| D["生成最终提示词"]:::process
+    D -->|调用大模型| E["大模型"]:::model
+    
+    subgraph "提示词模板类型"
+    C -->|通用聊天| F["general_chat"]:::template
+    C -->|知识库聊天| G["knowledge_base_chat"]:::template
+    C -->|搜索引擎聊天| H["real_time_search"]:::template
+    C -->|推荐聊天| I["recommend_base_chat"]:::template
+    C -->|Agent聊天| J["agent_chat"]:::template
+    end
+    
+    classDef chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef utils fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef config fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef process fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef model fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef template fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+```
+
+#### 11.2.3 实现流程
+
+1. **聊天模块请求**：聊天模块调用get_prompt_template函数获取提示词模板
+2. **加载配置**：get_prompt_template函数从PROMPT_TEMPLATES字典中加载配置
+3. **返回模板**：返回对应的提示词模板
+4. **填充模板变量**：聊天模块填充模板变量，生成最终提示词
+5. **调用大模型**：使用最终提示词调用大模型生成回答
+
+#### 11.2.4 核心组件
+
+| 组件 | 作用 | 文件位置 |
+|------|------|----------|
+| PROMPT_TEMPLATES | 存储所有提示词模板的字典 | `configs/prompt_config.py` |
+| get_prompt_template | 获取提示词模板的工具函数 | `server/utils.py:149` |
+| 提示词模板类型 | 支持5种聊天场景的提示词模板 | `configs/prompt_config.py` |
+
+### 11.3 缓存模块架构
+
+#### 11.3.1 架构概述
+
+缓存模块是本系统的性能优化组件，通过缓存嵌入模型和向量数据库，提高系统的响应速度和并发处理能力。系统采用了线程安全的缓存设计，支持LRU缓存策略。
+
+#### 11.3.2 架构图
+
+```mermaid
+flowchart TD
+    A["聊天模块"]:::chat -->|请求嵌入模型| B["EmbeddingsPool"]:::pool
+    B -->|检查缓存| C["缓存检查"]:::check
+    C -->|缓存命中| D["返回缓存的嵌入模型"]:::return
+    C -->|缓存未命中| E["加载嵌入模型"]:::load
+    E -->|创建嵌入模型| F["嵌入模型实例"]:::model
+    F -->|存入缓存| G["更新缓存"]:::update
+    G -->|返回嵌入模型| D
+    D -->|返回给聊天模块| A
+    
+    subgraph "缓存组件"
+    B -->|继承| H["CachePool"]:::base_pool
+    H -->|管理| I["ThreadSafeObject"]:::thread_safe
+    I -->|保证线程安全| J["线程锁机制"]:::lock
+    H -->|LRU策略| K["OrderedDict缓存"]:::lru
+    end
+    
+    classDef chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef pool fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef check fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef return fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef load fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef model fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef update fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef base_pool fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef thread_safe fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef lock fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef lru fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+```
+
+#### 11.3.3 实现流程
+
+1. **聊天模块请求**：聊天模块请求嵌入模型
+2. **检查缓存**：EmbeddingsPool检查缓存中是否存在请求的嵌入模型
+3. **缓存命中**：如果缓存命中，直接返回缓存的嵌入模型
+4. **缓存未命中**：如果缓存未命中，加载嵌入模型
+5. **创建嵌入模型**：创建嵌入模型实例
+6. **存入缓存**：将嵌入模型实例存入缓存，更新LRU顺序
+7. **返回嵌入模型**：返回嵌入模型给聊天模块
+
+#### 11.3.4 核心组件
+
+| 组件 | 作用 | 文件位置 |
+|------|------|----------|
+| CachePool | 缓存池基类，实现了LRU缓存策略 | `server/knowledge_base/kb_cache/base.py:83` |
+| EmbeddingsPool | 嵌入模型缓存池，继承自CachePool | `server/knowledge_base/kb_cache/base.py:198` |
+| ThreadSafeObject | 线程安全对象，保证多线程环境下的安全访问 | `server/knowledge_base/kb_cache/base.py:12` |
+| load_embeddings | 加载嵌入模型，实现了缓存逻辑 | `server/knowledge_base/kb_cache/base.py:202` |
+| embeddings_pool | 全局嵌入模型缓存实例 | `server/knowledge_base/kb_cache/base.py:256` |
+
+### 11.4 分布式部署架构
+
+#### 11.4.1 架构概述
+
+分布式部署架构是本系统的扩展性组件，通过FastChat架构实现了大模型的分布式部署和调度。系统采用了Controller-Worker架构，支持多Model Worker的注册和调度。
+
+#### 11.4.2 架构图
+
+```mermaid
+flowchart TD
+    A["客户端"]:::client -->|HTTP请求| B["API Server集群"]:::api_cluster
+    B -->|请求大模型调用| C["FastChat Controller"]:::controller
+    C -->|调度请求| D["Model Worker 1"]:::worker
+    C -->|调度请求| E["Model Worker 2"]:::worker
+    C -->|调度请求| F["Model Worker N"]:::worker
+    D -->|加载模型| G["本地大模型 1"]:::model
+    E -->|加载模型| H["本地大模型 2"]:::model
+    F -->|调用API| I["在线大模型"]:::online_model
+    
+    subgraph "部署组件"
+    C -->|管理| J["模型注册管理"]:::registry
+    C -->|调度| K["请求调度算法"]:::scheduler
+    C -->|监控| L["Worker监控"]:::monitor
+    end
+    
+    classDef client fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef api_cluster fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef controller fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef worker fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef model fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef online_model fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef registry fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef scheduler fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef monitor fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+```
+
+#### 11.4.3 实现流程
+
+1. **客户端请求**：客户端发送HTTP请求到API Server集群
+2. **请求大模型调用**：API Server集群请求FastChat Controller
+3. **调度请求**：Controller根据调度算法选择合适的Model Worker
+4. **加载模型**：Model Worker加载本地大模型或调用在线大模型
+5. **返回结果**：Model Worker返回结果给Controller
+6. **返回给API Server**：Controller返回结果给API Server集群
+7. **返回给客户端**：API Server集群返回结果给客户端
+
+#### 11.4.4 核心组件
+
+| 组件 | 作用 | 文件位置 |
+|------|------|----------|
+| FastChat Controller | 核心组件，负责管理和调度Model Worker | 来自FastChat库 |
+| Model Worker | 负责加载和运行大模型 | 来自FastChat库 |
+| OpenAI API | 提供OpenAI兼容的API接口 | 来自FastChat库 |
+| run_controller | 启动Controller服务 | `startup.py:128` |
+| run_model_worker | 启动Model Worker服务 | `startup.py:266` |
+| run_openai_api | 启动OpenAI API服务 | `startup.py:217` |
+
+## 12. 目录结构
+
+```
+fufan-chat-api-6.0.0/
+├── .vscode/             # VSCode配置
+├── configs/             # 配置文件
+│   ├── __init__.py
+│   ├── basic_config.py
+│   ├── kb_config.py
+│   ├── model_config.py
+│   ├── prompt_config.py
+│   └── server_config.py
+├── data/                # 数据文件
+├── docker/              # Docker配置
+├── docs/                # 文档
+├── document_loaders/    # 文档加载器
+├── fufanrag/            # RAG相关代码
+├── images/              # 图片资源
+├── knowledge_base/      # 知识库文件
+├── model_download_scripts/ # 模型下载脚本
+├── playground/          # 测试代码
+├── scripts/             # 脚本文件
+├── server/              # 服务器代码
+│   ├── agent/           # AI Agent相关代码
+│   ├── callback_handler/ # 回调处理器
+│   ├── chat/            # 聊天模块
+│   ├── db/              # 数据库相关代码
+│   ├── knowledge_base/  # 知识库管理
+│   ├── memory/          # 会话内存
+│   ├── model_workers/   # 模型工作器
+│   ├── reranker/        # 重排序模型
+│   ├── api_router.py    # API路由
+│   ├── embeddings_api.py # 嵌入API
+│   ├── main.py          # 主入口
+│   └── utils.py         # 工具函数
+├── static/              # 静态文件
+├── text_splitter/       # 文本分割器
+├── .gitignore           # Git忽略文件
+├── .python-version      # Python版本
+├── Fufan Chat API 项目架构分析.md # 项目架构分析
+├── README.md            # 项目说明
+├── README_zh.md         # 中文项目说明
+├── TP_NUM_C_BUFS_SOLUTION.md # TP_NUM_C_BUFS解决方案
+├── main.py              # 主入口
+├── pyproject.toml       # Python项目配置
+├── requirements.txt     # 依赖包
+├── requirements.txt.bak # 依赖包备份
+├── start_service.bat    # 服务启动脚本
+├── startup.py           # 启动脚本
+└── test_startup.py      # 测试启动脚本
+```
+
+## 13. 总结
 
 Fufan Chat API 是一个功能丰富、架构清晰的智能问答系统，具有良好的扩展性和灵活性。系统采用了模块化设计，各组件之间职责明确，便于维护和扩展。通过集成 FastChat 架构，系统可以灵活支持多种大模型，包括本地模型和在线模型。
 
@@ -586,5 +857,7 @@ Fufan Chat API 是一个功能丰富、架构清晰的智能问答系统，具�
 4. **完善的知识库管理**：支持 Faiss 和 Milvus 向量数据库
 5. **良好的用户体验**：支持流式输出，实时返回结果
 6. **完整的用户和会话管理**：便于跟踪和管理用户交互
+7. **高效的缓存机制**：提高系统的响应速度和并发处理能力
+8. **分布式部署支持**：支持大模型的分布式部署和调度
 
 通过合理的部署和优化，系统可以在不同规模的环境中稳定运行，满足各种智能问答需求。
