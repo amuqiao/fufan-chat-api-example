@@ -27,58 +27,58 @@ Fufan Chat API 是一个基于大模型技术的智能问答系统，实现了�
 
 ```mermaid
 flowchart TD
-    A[客户端]:::client -->|HTTP请求| B[API Server]:::apiServer
+    A["客户端"]:::client -->|HTTP请求| B["API Server"]:::api
     
     subgraph "后端服务"
-    B -->|通用聊天| C[Chat模块]:::chatModule
-    B -->|知识库聊天| D[知识库聊天模块]:::kbChatModule
-    B -->|搜索引擎聊天| E[搜索引擎聊天模块]:::searchChatModule
-    B -->|推荐聊天| F[推荐聊天模块]:::recommendChatModule
-    B -->|Agent聊天| G[Agent聊天模块]:::agentChatModule
+    B -->|通用聊天| C["Chat模块"]:::chat
+    B -->|知识库聊天| D["知识库聊天模块"]:::kb_chat
+    B -->|搜索引擎聊天| E["搜索引擎聊天模块"]:::search_chat
+    B -->|推荐聊天| F["推荐聊天模块"]:::recommend_chat
+    B -->|Agent聊天| G["Agent聊天模块"]:::agent_chat
     
-    C -->|调用大模型| H[FastChat架构]:::fastChat
-    D -->|查询知识库| I[知识库管理模块]:::kbManager
+    C -->|调用大模型| H["FastChat架构"]:::fastchat
+    D -->|查询知识库| I["知识库管理模块"]:::kb
     D -->|调用大模型| H
-    E -->|搜索互联网| J[搜索引擎]:::searchEngine
+    E -->|搜索互联网| J["搜索引擎"]:::search
     E -->|调用大模型| H
-    F -->|查询用户历史| K[数据库]:::database
+    F -->|查询用户历史| K["数据库"]:::db
     F -->|调用大模型| H
-    G -->|调用工具| L[工具集]:::tools
+    G -->|调用工具| L["工具集"]:::tools
     G -->|调用大模型| H
     
-    I -->|向量检索| M[向量数据库]:::vectorDb
+    I -->|向量检索| M["向量数据库"]:::vector_db
     I -->|存储元数据| K
     
     subgraph "FastChat架构"
-    H -->|请求分发| N[Controller]:::controller
-    N -->|调度| O[Model Worker]:::modelWorker
-    O -->|加载模型| P[大模型]:::model
+    H -->|请求分发| N["Controller"]:::controller
+    N -->|调度| O["Model Worker"]:::worker
+    O -->|加载模型| P["大模型"]:::model
     end
     end
     
-    M -->|存储向量| Q[知识库文件]:::knowledgeFiles
-    K -->|存储用户数据| R[用户管理模块]:::userManager
-    K -->|存储会话数据| S[会话管理模块]:::sessionManager
+    M -->|存储向量| Q["知识库文件"]:::kb_files
+    K -->|存储用户数据| R["用户管理模块"]:::user_mgmt
+    K -->|存储会话数据| S["会话管理模块"]:::session_mgmt
     
     classDef client fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
-    classDef apiServer fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef chatModule fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef kbChatModule fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef searchChatModule fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef recommendChatModule fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef agentChatModule fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef fastChat fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef kbManager fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef searchEngine fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef database fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef tools fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef vectorDb fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef controller fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef modelWorker fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef model fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef knowledgeFiles fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
-    classDef userManager fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
-    classDef sessionManager fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
+    classDef api fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef kb_chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef search_chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef recommend_chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef agent_chat fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef fastchat fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef kb fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef search fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef db fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef tools fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
+    classDef vector_db fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef controller fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef worker fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef model fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef kb_files fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
+    classDef user_mgmt fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef session_mgmt fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
 ```
 
 ### 2.2 模块说明
@@ -118,6 +118,8 @@ sequenceDiagram
     Chat->>DB: 保存回答
     Chat-->>API: 流式返回回答
     API-->>Client: SSE流式响应
+    
+    Note over Client,DB: 数据流: 用户查询 → 保存到数据库 → 大模型生成 → 保存回答 → 流式返回
 ```
 
 ### 3.2 知识库聊天流程
@@ -144,51 +146,49 @@ sequenceDiagram
     KB_Chat->>DB: 保存回答
     KB_Chat-->>API: 流式返回回答
     API-->>Client: SSE流式响应
+    
+    Note over Client,DB: 数据流: 用户查询 → 保存到数据库 → 向量检索 → 获取相关文档 → 大模型生成 → 保存回答 → 流式返回
 ```
 
 ### 3.3 系统启动流程
 
 ```mermaid
 flowchart TD
-    A[启动startup.py]:::startup -->|解析命令行参数| B[parse_args]:::parseArgs
-    B -->|设置启动方法| C[mp.set_start_method]:::setStartMethod
-    C -->|创建Manager| D[mp.Manager]:::createManager
-    D -->|启动Controller| E[run_controller]:::runController
-    D -->|启动OpenAI API| F[run_openai_api]:::runOpenaiApi
-    D -->|启动Model Worker| G[run_model_worker]:::runModelWorker
-    D -->|启动API Server| H[run_api_server]:::runApiServer
+    A["启动startup.py"]:::start -->|解析命令行参数| B["parse_args"]:::init
+    B -->|设置启动方法| C["mp.set_start_method"]:::init
+    C -->|创建Manager| D["mp.Manager"]:::init
+    D -->|启动Controller| E["run_controller"]:::start_controller
+    D -->|启动OpenAI API| F["run_openai_api"]:::start_openai
+    D -->|启动Model Worker| G["run_model_worker"]:::start_worker
+    D -->|启动API Server| H["run_api_server"]:::start_api
     
     subgraph "Controller启动"
-    E -->|创建Controller应用| E1[create_controller_app]:::createControllerApp
-    E -->|运行uvicorn| E2[uvicorn.run]:::runUvicorn
+    E -->|创建Controller应用| E1["create_controller_app"]:::create_app
+    E -->|运行uvicorn| E2["uvicorn.run"]:::run_uvicorn
     end
     
     subgraph "Model Worker启动"
-    G -->|获取模型配置| G1[get_model_worker_config]:::getModelConfig
-    G -->|创建Model Worker应用| G2[create_model_worker_app]:::createModelWorkerApp
-    G -->|运行uvicorn| G3[uvicorn.run]:::runUvicorn
+    G -->|获取模型配置| G1["get_model_worker_config"]:::get_config
+    G -->|创建Model Worker应用| G2["create_model_worker_app"]:::create_app
+    G -->|运行uvicorn| G3["uvicorn.run"]:::run_uvicorn
     end
     
     subgraph "API Server启动"
-    H -->|创建FastAPI应用| H1[create_app]:::createFastapiApp
-    H -->|挂载路由| H2[mount_app_routes]:::mountRoutes
-    H -->|运行uvicorn| H3[uvicorn.run]:::runUvicorn
+    H -->|创建FastAPI应用| H1["create_app"]:::create_app
+    H -->|挂载路由| H2["mount_app_routes"]:::mount_routes
+    H -->|运行uvicorn| H3["uvicorn.run"]:::run_uvicorn
     end
     
-    classDef startup fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
-    classDef parseArgs fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef setStartMethod fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef createManager fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef runController fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef runOpenaiApi fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef runModelWorker fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef runApiServer fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
-    classDef createControllerApp fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef runUvicorn fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef getModelConfig fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef createModelWorkerApp fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef createFastapiApp fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
-    classDef mountRoutes fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef start fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
+    classDef init fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef start_controller fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef start_openai fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
+    classDef start_worker fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef start_api fill:#FECA57,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef create_app fill:#FF9FF3,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef run_uvicorn fill:#E9ECEF,stroke:#2D3436,stroke-width:3px,color:#2D3436,rx:8,ry:8;
+    classDef get_config fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
+    classDef mount_routes fill:#45B7D1,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
 ```
 
 ## 4. 配置管理
@@ -361,6 +361,8 @@ sequenceDiagram
     Model-->>Worker: 返回生成结果
     Worker-->>Controller: 返回结果
     Controller-->>Client: 返回结果
+    
+    Note over Client,Model: 数据流: API请求 → 控制器调度 → 模型推理 → 结果返回 → API响应
 ```
 
 ### 7.3 支持的模型
