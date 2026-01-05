@@ -149,13 +149,12 @@ flowchart TD
     J -->|准备目录| K["_prepare_dir"]:::process
     end
     
-    K -->|完成初始化| L["final_config"]:::end
+    K -->|完成初始化| L["final_config"]:::endnode  
     
+  
     classDef start fill:#FF6B6B,stroke:#2D3436,stroke-width:3px,color:white,rx:8,ry:8;
     classDef process fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    classDef end fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    
-    Note over A,L: 数据流: 配置文件 → 变量配置 → 外部配置合并 → 内部配置加载 → 最终配置生成 → 配置检查 → 设备初始化 → 目录准备 → 配置完成
+    classDef endnode fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;  
 ```
 
 ### 4.2 检索器
@@ -226,8 +225,6 @@ flowchart TD
     classDef process fill:#4ECDC4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
     classDef model fill:#54A0FF,stroke:#2D3436,stroke-width:2px,color:white,rx:8,ry:8;
     classDef output fill:#96CEB4,stroke:#2D3436,stroke-width:2px,color:#2D3436,rx:8,ry:8;
-    
-    Note over A,H: 数据流: 输入文本 → 编码 → 生成 → 解码 → 清理 → 最终结果
 ```
 
 ### 4.4 管道
